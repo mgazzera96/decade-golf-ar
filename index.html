@@ -104,20 +104,63 @@
         <!-- Instructions -->
         <div id="instructions">
             <h3>Instrucciones</h3>
-            <ol>
-                <li>Toca "Iniciar AR" y permite el acceso a la cámara</li>
-                <li>Apunta al punto donde quieres colocar tu objetivo</li>
-                <li>Toca "Marcar Objetivo" para establecer el target</li>
-                <li>Las líneas mostrarán ±10 yardas a cada lado</li>
-                <li>Después de cada tiro, apunta donde cayó la bola</li>
-                <li>Toca "Marcar Tiro" para registrar la desviación</li>
-            </ol>
-            <p class="note"><strong>Nota:</strong> Necesitas un dispositivo Android con Chrome o un dispositivo iOS con soporte WebXR.</p>
+            <div id="instructions-android">
+                <ol>
+                    <li>Toca "Iniciar AR" y permite el acceso a la cámara</li>
+                    <li>Apunta al punto donde quieres colocar tu objetivo</li>
+                    <li>Toca "Marcar Objetivo" para establecer el target</li>
+                    <li>Las líneas mostrarán ±10 yardas a cada lado</li>
+                    <li>Después de cada tiro, apunta donde cayó la bola</li>
+                    <li>Toca "Marcar Tiro" para registrar la desviación</li>
+                </ol>
+                <p class="note"><strong>Android:</strong> Usa WebXR con realidad aumentada completa.</p>
+            </div>
+            <div id="instructions-ios">
+                <ol>
+                    <li>Toca "Iniciar AR" y permite el acceso a la cámara</li>
+                    <li>Toca "Marcar Objetivo" e ingresa la distancia al target (en yardas)</li>
+                    <li>El centro de la pantalla será tu objetivo</li>
+                    <li>Después de cada tiro, toca la pantalla donde cayó la bola</li>
+                    <li>La app calculará la desviación lateral automáticamente</li>
+                </ol>
+                <p class="note"><strong>iOS:</strong> Usa cámara + marcado manual (WebXR no disponible en iOS).</p>
+            </div>
         </div>
     </div>
 
-    <!-- Three.js for 3D rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-    <script src="app.js"></script>
+    <!-- Detect device and load appropriate script -->
+    <script>
+        // Detect iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        // Show/hide appropriate instructions
+        document.addEventListener('DOMContentLoaded', () => {
+            const androidInstructions = document.getElementById('instructions-android');
+            const iosInstructions = document.getElementById('instructions-ios');
+
+            if (isIOS) {
+                androidInstructions.style.display = 'none';
+                iosInstructions.style.display = 'block';
+            } else {
+                androidInstructions.style.display = 'block';
+                iosInstructions.style.display = 'none';
+            }
+        });
+
+        // Load Three.js only for Android/WebXR version
+        if (!isIOS) {
+            const threeScript = document.createElement('script');
+            threeScript.src = 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js';
+            document.head.appendChild(threeScript);
+        }
+
+        // Load appropriate app script
+        const appScript = document.createElement('script');
+        appScript.src = isIOS ? 'app-ios.js' : 'app.js';
+        document.body.appendChild(appScript);
+
+        console.log('Loading app for:', isIOS ? 'iOS' : 'Android/WebXR');
+    </script>
 </body>
 </html>
