@@ -64,7 +64,8 @@ class DecadeGolfARiOS {
 
     async startCamera() {
         try {
-            this.showStatus('Iniciando cámara...', 'info');
+            this.showStatus('Solicitando permiso de cámara...', 'info');
+            console.log('Requesting camera permission...');
 
             // Request camera access
             this.stream = await navigator.mediaDevices.getUserMedia({
@@ -76,6 +77,9 @@ class DecadeGolfARiOS {
                 audio: false
             });
 
+            console.log('Camera permission granted, creating video element...');
+            this.showStatus('Permiso otorgado, iniciando cámara...', 'info');
+
             // Create video element
             this.video = document.createElement('video');
             this.video.setAttribute('playsinline', '');
@@ -84,22 +88,51 @@ class DecadeGolfARiOS {
             this.video.style.width = '100%';
             this.video.style.height = '100%';
             this.video.style.objectFit = 'cover';
+            this.video.style.display = 'block';
 
             // Replace canvas with video
             this.arCanvas.style.display = 'none';
             this.arContainer.insertBefore(this.video, this.arCanvas);
 
             this.video.srcObject = this.stream;
+
+            // Wait for video to be ready
+            await new Promise((resolve, reject) => {
+                this.video.onloadedmetadata = () => {
+                    console.log('Video metadata loaded');
+                    resolve();
+                };
+                this.video.onerror = (err) => {
+                    console.error('Video error:', err);
+                    reject(err);
+                };
+                setTimeout(() => reject(new Error('Video timeout')), 10000);
+            });
+
             await this.video.play();
+            console.log('Video playing');
 
             this.isARActive = true;
             this.preARControls.classList.add('hidden');
             this.arActiveControls.classList.remove('hidden');
-            this.showStatus('Cámara activa', 'success');
+            this.showStatus('✓ Cámara activa! Ahora marca tu objetivo', 'success');
 
         } catch (err) {
             console.error('Error al acceder a la cámara:', err);
-            this.showStatus('Error al acceder a la cámara: ' + err.message, 'error');
+
+            let errorMsg = 'Error: ';
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                errorMsg += 'Debes permitir el acceso a la cámara. Ve a Configuración > Safari > Cámara';
+            } else if (err.name === 'NotFoundError') {
+                errorMsg += 'No se encontró cámara en el dispositivo';
+            } else if (err.name === 'NotReadableError') {
+                errorMsg += 'La cámara está siendo usada por otra app';
+            } else {
+                errorMsg += err.message || 'Desconocido';
+            }
+
+            this.showStatus(errorMsg, 'error');
+            alert(errorMsg);
         }
     }
 
@@ -345,14 +378,24 @@ class DecadeGolfARiOS {
     }
 
     showStatus(message, type = 'info') {
+        console.log('Status:', type, message);
+
+        if (!this.arStatus) {
+            console.error('arStatus element not found!');
+            return;
+        }
+
         this.arStatus.textContent = message;
         this.arStatus.className = 'status-message ' + type;
         this.arStatus.classList.remove('hidden');
+        this.arStatus.style.display = 'block';
 
-        // Auto-hide after 5 seconds
-        setTimeout(() => {
-            this.arStatus.classList.add('hidden');
-        }, 5000);
+        // Don't auto-hide errors or important messages
+        if (type !== 'error' && type !== 'info') {
+            setTimeout(() => {
+                this.arStatus.classList.add('hidden');
+            }, 8000);
+        }
     }
 }
 
