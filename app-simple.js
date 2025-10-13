@@ -118,148 +118,138 @@ class DecadeGolfSimple {
             return;
         }
 
+        // Capture current frame
+        this.captureFrame();
+
         // Calculate screen positions
         const rect = this.arContainer.getBoundingClientRect();
         const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
 
         // Calculate 10 yards in pixels
-        // Assume 30° FOV (typical for phone cameras)
         const fovDegrees = 30;
         const fovRadians = (fovDegrees * Math.PI) / 180;
         const widthAtDistance = 2 * this.distanceToTarget * Math.tan(fovRadians / 2);
         const pixelsPerYard = rect.width / widthAtDistance;
         const tenYardsInPixels = 10 * pixelsPerYard;
 
-        // Create markers
-        this.createCenterMarker(centerX, centerY);
-        this.createBoundaryMarkers(centerX, centerY, tenYardsInPixels);
+        // Draw vertical reference lines
+        this.drawReferenceLines(centerX, tenYardsInPixels);
 
         this.isTargetSet = true;
         this.setTargetBtn.disabled = true;
-        this.showStatus(`✓ Target a ${this.distanceToTarget} yardas\n(Líneas amarillas = ±10 yardas)`, 'success');
+        this.showStatus(`✓ Foto capturada - Referencias marcadas\n(Centro rojo, ±10 yardas amarillas)`, 'success');
     }
 
-    createCenterMarker(x, y) {
-        // Center target (red)
-        this.targetMarker.style.cssText = `
-            position: absolute;
-            left: ${x}px;
-            top: ${y}px;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
-            border: 4px solid #ff0000;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,0,0,0.3), transparent 70%);
-            box-shadow: 0 0 20px rgba(255,0,0,0.8);
-            pointer-events: none;
-            z-index: 100;
-        `;
-        this.targetMarker.classList.remove('hidden');
+    captureFrame() {
+        // Create canvas to capture video frame
+        const canvas = document.createElement('canvas');
+        canvas.width = this.video.videoWidth;
+        canvas.height = this.video.videoHeight;
 
-        // Add crosshair
-        const crosshair = document.createElement('div');
-        crosshair.style.cssText = `
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 30px;
-            height: 30px;
-            pointer-events: none;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(this.video, 0, 0, canvas.width, canvas.height);
+
+        // Stop video
+        if (this.stream) {
+            this.stream.getTracks().forEach(track => track.stop());
+        }
+
+        // Replace video with captured image
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL('image/jpeg', 0.9);
+        img.style.cssText = `
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         `;
-        crosshair.innerHTML = `
-            <div style="position: absolute; top: 50%; left: 0; width: 100%; height: 2px; background: #ff0000; transform: translateY(-50%);"></div>
-            <div style="position: absolute; left: 50%; top: 0; height: 100%; width: 2px; background: #ff0000; transform: translateX(-50%);"></div>
-        `;
-        this.targetMarker.appendChild(crosshair);
+
+        this.video.style.display = 'none';
+        this.arContainer.insertBefore(img, this.arCanvas);
+
+        console.log('Frame captured and frozen');
     }
 
-    createBoundaryMarkers(centerX, centerY, distance) {
+    drawReferenceLines(centerX, distance) {
         const leftX = centerX - distance;
         const rightX = centerX + distance;
 
-        // Left line (10 yards left)
-        const leftLine = this.createLine(leftX, 'IZQUIERDA\n-10 yds');
-        this.arOverlay.appendChild(leftLine);
+        // Center line (red)
+        this.createVerticalLine(centerX, '#ff0000', 'CENTRO\nTARGET', 6);
 
-        // Right line (10 yards right)
-        const rightLine = this.createLine(rightX, 'DERECHA\n+10 yds');
-        this.arOverlay.appendChild(rightLine);
+        // Left line (-10 yards)
+        this.createVerticalLine(leftX, '#ffeb3b', 'IZQUIERDA\n-10 yds', 4);
 
-        // Add visual reference lines
-        this.createReferenceLine(leftX, '#ffeb3b');
-        this.createReferenceLine(rightX, '#ffeb3b');
+        // Right line (+10 yards)
+        this.createVerticalLine(rightX, '#ffeb3b', 'DERECHA\n+10 yds', 4);
     }
 
-    createLine(x, label) {
+    createVerticalLine(x, color, label, width = 4) {
         const line = document.createElement('div');
         line.style.cssText = `
             position: absolute;
             left: ${x}px;
-            top: 20%;
+            top: 0;
             transform: translateX(-50%);
-            width: 4px;
-            height: 60%;
-            background: linear-gradient(to bottom, transparent, #ffeb3b 20%, #ffeb3b 80%, transparent);
-            box-shadow: 0 0 15px rgba(255,235,59,0.8);
+            width: ${width}px;
+            height: 100%;
+            background: ${color};
+            box-shadow: 0 0 15px ${color};
             pointer-events: none;
-            z-index: 99;
+            z-index: 100;
         `;
 
-        // Add label
+        // Add label at top
         const labelEl = document.createElement('div');
         labelEl.textContent = label;
         labelEl.style.cssText = `
             position: absolute;
-            top: -40px;
+            top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: #ffeb3b;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 11px;
+            background: rgba(0,0,0,0.85);
+            color: ${color};
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
             font-weight: bold;
             white-space: pre;
             text-align: center;
-            line-height: 1.3;
+            line-height: 1.4;
+            border: 2px solid ${color};
         `;
         line.appendChild(labelEl);
 
-        return line;
+        this.arOverlay.appendChild(line);
     }
 
-    createReferenceLine(x, color) {
-        const refLine = document.createElement('div');
-        refLine.style.cssText = `
-            position: absolute;
-            left: ${x}px;
-            top: 0;
-            transform: translateX(-50%);
-            width: 2px;
-            height: 100%;
-            background: ${color};
-            opacity: 0.6;
-            pointer-events: none;
-            z-index: 98;
-        `;
-        this.arOverlay.appendChild(refLine);
-    }
 
     reset() {
+        // Remove captured image if exists
+        const img = this.arContainer.querySelector('img');
+        if (img) {
+            img.remove();
+        }
+
+        // Remove all created lines
+        const lines = this.arOverlay.querySelectorAll('div:not(#reticle):not(#target-marker):not(#left-line):not(#right-line):not(#shot-marker):not(#measurement-display)');
+        lines.forEach(el => el.remove());
+
         // Clear markers
         this.targetMarker.innerHTML = '';
         this.targetMarker.classList.add('hidden');
 
-        // Remove all created elements
-        const toRemove = this.arOverlay.querySelectorAll('div:not(#reticle):not(#target-marker):not(#left-line):not(#right-line):not(#shot-marker):not(#measurement-display)');
-        toRemove.forEach(el => el.remove());
-
+        // Restart camera
         this.isTargetSet = false;
         this.setTargetBtn.disabled = false;
-        this.showStatus('🔄 Listo para marcar nuevo objetivo', 'info');
+
+        // Reopen camera
+        if (this.video) {
+            this.video.style.display = 'block';
+            this.startCamera();
+        }
+
+        this.showStatus('🔄 Listo para nueva foto', 'info');
     }
 
     stopCamera() {
