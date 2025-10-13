@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decade Golf AR - Training App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header>
+            <h1>Decade Golf AR</h1>
+            <p class="subtitle">Sistema de Entrenamiento con Realidad Aumentada</p>
+        </header>
+
+        <!-- AR Canvas Container -->
+        <div id="ar-container">
+            <canvas id="ar-canvas"></canvas>
+
+            <!-- AR Overlay UI -->
+            <div id="ar-overlay">
+                <!-- Reticle central -->
+                <div id="reticle"></div>
+
+                <!-- Target marker -->
+                <div id="target-marker" class="hidden"></div>
+
+                <!-- Distance lines (10 yards left/right) -->
+                <div id="left-line" class="distance-line hidden"></div>
+                <div id="right-line" class="distance-line hidden"></div>
+
+                <!-- Shot marker -->
+                <div id="shot-marker" class="hidden"></div>
+
+                <!-- Measurement display -->
+                <div id="measurement-display" class="hidden">
+                    <div class="measurement-item">
+                        <span class="label">Desviación:</span>
+                        <span id="deviation-value" class="value">0</span>
+                        <span class="unit">yardas</span>
+                    </div>
+                    <div class="measurement-item">
+                        <span class="label">Dirección:</span>
+                        <span id="direction-value" class="value">Centro</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div id="controls">
+            <div id="pre-ar-controls">
+                <button id="start-ar-btn" class="btn btn-primary">
+                    <span class="btn-icon">📹</span>
+                    Iniciar AR
+                </button>
+                <div id="ar-status" class="status-message hidden"></div>
+            </div>
+
+            <div id="ar-active-controls" class="hidden">
+                <button id="set-target-btn" class="btn btn-success">
+                    <span class="btn-icon">🎯</span>
+                    Marcar Objetivo
+                </button>
+                <button id="mark-shot-btn" class="btn btn-info" disabled>
+                    <span class="btn-icon">⛳</span>
+                    Marcar Tiro
+                </button>
+                <button id="reset-btn" class="btn btn-warning">
+                    <span class="btn-icon">🔄</span>
+                    Reiniciar
+                </button>
+                <button id="stop-ar-btn" class="btn btn-danger">
+                    <span class="btn-icon">⏹️</span>
+                    Detener AR
+                </button>
+            </div>
+        </div>
+
+        <!-- Shot History -->
+        <div id="shot-history" class="hidden">
+            <h3>Historial de Tiros</h3>
+            <div id="shots-list"></div>
+            <div id="stats-summary" class="hidden">
+                <h4>Resumen</h4>
+                <div class="stat-item">
+                    <span class="stat-label">Total de tiros:</span>
+                    <span id="total-shots" class="stat-value">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Promedio desviación:</span>
+                    <span id="avg-deviation" class="stat-value">0</span>
+                    <span class="stat-unit">yardas</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Mejor tiro:</span>
+                    <span id="best-shot" class="stat-value">0</span>
+                    <span class="stat-unit">yardas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div id="instructions">
+            <h3>Instrucciones</h3>
+            <ol>
+                <li>Toca "Iniciar AR" y permite el acceso a la cámara</li>
+                <li>Apunta al punto donde quieres colocar tu objetivo</li>
+                <li>Toca "Marcar Objetivo" para establecer el target</li>
+                <li>Las líneas mostrarán ±10 yardas a cada lado</li>
+                <li>Después de cada tiro, apunta donde cayó la bola</li>
+                <li>Toca "Marcar Tiro" para registrar la desviación</li>
+            </ol>
+            <p class="note"><strong>Nota:</strong> Necesitas un dispositivo Android con Chrome o un dispositivo iOS con soporte WebXR.</p>
+        </div>
+    </div>
+
+    <!-- Three.js for 3D rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
